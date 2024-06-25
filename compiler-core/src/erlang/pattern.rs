@@ -192,6 +192,11 @@ fn pattern_segment<'a>(
     env: &mut Env<'a>,
     guards: &mut Vec<Document<'a>>,
 ) -> Document<'a> {
+    // We need the size to be computed before the document as the document will
+    // update the env variables, causing the size to use the new variables
+    // rather than the older ones.
+    // https://github.com/gleam-lang/gleam/issues/3315
+    let mut size_env = env.clone();
     let document = match value {
         // Skip the normal <<value/utf8>> surrounds
         Pattern::String { value, .. } => value.to_doc().surround("\"", "\""),
@@ -206,11 +211,10 @@ fn pattern_segment<'a>(
         _ => panic!("Pattern segment match not recognised"),
     };
 
-    let size = |value: &'a TypedPattern, env: &mut Env<'a>| {
-        Some(
-            ":".to_doc()
-                .append(print(value, vars, define_variables, env, guards)),
-        )
+    let size = |value: &'a TypedPattern, _env: &mut Env<'a>| {
+        let result =":".to_doc()
+                .append(print(value, vars, define_variables, &mut size_env, guards));
+        Some(result)
     };
 
     let unit = |value: &'a u8| Some(Document::String(format!("unit:{value}")));

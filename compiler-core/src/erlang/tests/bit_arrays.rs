@@ -22,7 +22,7 @@ fn bit_array_float() {
         r#"pub fn main() {
   let b = 16
   let floats = <<1.0:16-float, 5.0:float-32, 6.0:float-64-little, 1.0:float-size(b)>>
-  let assert <<1.0:16-float, 5.0:float-32, 6.0:float-64-little, 1.0:float-size(b)>> = floats 
+  let assert <<1.0:16-float, 5.0:float-32, 6.0:float-64-little, 1.0:float-size(b)>> = floats
 }"#
     );
 }
@@ -161,3 +161,21 @@ fn unicode_bit_array_2() {
 }"#
     );
 }
+
+// https://github.com/gleam-lang/gleam/issues/3315
+#[test]
+fn case_shadowed_variables_bit_pattern() {
+    assert_erl!(
+        "
+pub fn go(code) {
+  let pre = 1
+  case code {
+    <<pre:bytes-size(pre), _:bytes>> -> pre
+    _ -> panic
+  }
+}
+"
+    );
+}
+
+
